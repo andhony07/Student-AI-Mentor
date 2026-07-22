@@ -1,26 +1,42 @@
 import * as authService from '../services/authService.js';
 import ApiResponse from '../utils/apiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import User from '../models/User.js';
 
 export const register = asyncHandler(async (req, res, next) => {
-  const { name, email, password } = req.body;
-  const result = await authService.registerUser({ name, email, password });
-  return ApiResponse.success(res, 'User registered successfully', result, 201);
+  await authService.registerUser(req.body);
+  return ApiResponse.success(res, 'Registration successful. Please login.', null, 201);
 });
 
 export const login = asyncHandler(async (req, res, next) => {
-  const { email, password } = req.body;
-  const result = await authService.loginUser({ email, password });
-  return ApiResponse.success(res, 'User logged in successfully', result, 200);
+  const result = await authService.loginUser(req.body);
+  return res.status(200).json({
+    status: 'success',
+    token: result.token,
+    user: result.user
+  });
 });
 
 export const getMe = asyncHandler(async (req, res, next) => {
-  const user = {
-    _id: req.user._id,
-    name: req.user.name,
-    email: req.user.email,
-    role: req.user.role,
-    profile: req.user.profile
-  };
-  return ApiResponse.success(res, 'Current user profile fetched', { user }, 200);
+  const user = await User.findById(req.user._id);
+  return res.status(200).json({
+    status: 'success',
+    user
+  });
+});
+
+export const updateProfile = asyncHandler(async (req, res, next) => {
+  const user = await authService.updateProfile(req.user._id, req.body);
+  return res.status(200).json({
+    status: 'success',
+    user
+  });
+});
+
+export const changePassword = asyncHandler(async (req, res, next) => {
+  await authService.changePassword(req.user._id, req.body);
+  return res.status(200).json({
+    status: 'success',
+    message: 'Password changed successfully'
+  });
 });

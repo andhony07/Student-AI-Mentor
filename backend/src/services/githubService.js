@@ -1,59 +1,40 @@
-import axios from '../config/axios.js';
+import axios from 'axios';
+import AppError from '../utils/errorHandler.js';
 
-/**
- * Returns mock GitHub profile data.
- * Auth-independent: no userId required.
- */
-export const getGithubProfile = async () => {
-  // Return mock data directly since there is no GithubProfile model
-  return {
-    githubUsername: 'student-dev-mock',
-    avatarUrl: 'https://avatars.githubusercontent.com/u/9919?v=4',
-    publicRepos: 18,
-    followers: 12,
-    following: 15,
-    repositories: [
-      {
-        name: 'student-ai-mentor',
-        htmlUrl: 'https://github.com/student-dev-mock/student-ai-mentor',
-        description: 'Production-ready backend for Student AI Mentor',
-        language: 'JavaScript',
-        stargazersCount: 5,
-        forksCount: 2
-      }
-    ],
-    lastFetched: new Date()
-  };
+export const getGithubProfile = async (user) => {
+  const githubUsername = user?.githubUsername;
+  const githubUrl = user?.githubUrl;
+
+  if (!githubUsername) {
+    throw new AppError('GitHub username is not available for this user.', 400);
+  }
+
+  try {
+    const profileResponse = await axios.get(`https://api.github.com/users/${githubUsername}`);
+    const reposResponse = await axios.get(`https://api.github.com/users/${githubUsername}/repos?sort=updated&per_page=5`);
+    
+    return {
+      githubUsername,
+      githubUrl,
+      avatarUrl: profileResponse.data.avatar_url,
+      publicRepos: profileResponse.data.public_repos,
+      followers: profileResponse.data.followers,
+      following: profileResponse.data.following,
+      repositories: reposResponse.data.map(repo => ({
+        name: repo.name,
+        htmlUrl: repo.html_url,
+        description: repo.description,
+        language: repo.language,
+        stargazersCount: repo.stargazers_count,
+        forksCount: repo.forks_count
+      })),
+      lastFetched: new Date()
+    };
+  } catch (error) {
+    throw new AppError('Failed to fetch GitHub profile. Please check if the username is correct.', 500);
+  }
 };
 
-/**
- * Syncs a GitHub profile by username.
- * Auth-independent: no userId required.
- *
- * @param {string} githubUsername
- */
-export const syncGithubProfile = async (githubUsername) => {
-  // In the future:
-  // const response = await axios.get(`https://api.github.com/users/${githubUsername}`, {
-  //   headers: { Authorization: `token ${process.env.GITHUB_TOKEN}` }
-  // });
-
-  return {
-    githubUsername,
-    avatarUrl: 'https://avatars.githubusercontent.com/u/9919?v=4',
-    publicRepos: 25,
-    followers: 150,
-    following: 75,
-    repositories: [
-      {
-        name: 'ai-learning-assistant',
-        htmlUrl: `https://github.com/${githubUsername}/ai-learning-assistant`,
-        description: 'Mock repository details from sync',
-        language: 'JavaScript',
-        stargazersCount: 12,
-        forksCount: 4
-      }
-    ],
-    lastFetched: new Date()
-  };
+export const syncGithubProfile = async (user) => {
+  return await getGithubProfile(user);
 };

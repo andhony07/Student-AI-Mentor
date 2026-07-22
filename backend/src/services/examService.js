@@ -1,17 +1,106 @@
 import Exam from '../models/Exam.js';
+import { ai } from '../config/gemini.js';
+import { buildExamPlannerPrompt } from '../prompts/examPlannerPrompt.js';
+import { buildExamChatPrompt } from '../prompts/examChatPrompt.js';
+import AppError from '../utils/errorHandler.js';
+import logger from '../utils/logger.js';
 
-export const getExams = async () => {
-  return await Exam.find({});
+/**
+ * Call Gemini with a given prompt string.
+ */
+const callGemini = async (prompt) => {
+  if (!ai) {
+    throw new AppError(
+      'Gemini API is not configured. Please set GEMINI_API_KEY in your .env file.',
+      503
+    );
+  }
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.6-flash",
+      contents: prompt,
+    });
+    return response.text;
+  } catch (err) {
+    logger.error(`Gemini API error: ${err.message}`);
+    throw new AppError(`Gemini request failed: ${err.message}`, 502);
+  }
 };
 
-export const createExam = async (examData) => {
-  return await Exam.create(examData);
+/**
+ * Save exam details, generate a personalized study plan using Gemini, and store it.
+ */
+export const createStudyPlan = async (userId, examDetails) => {
+  const prompt = buildExamPlannerPrompt(examDetails);
+  const rawResponse = await callGemini(prompt);
+
+  // Strip markdown code fences if present
+  const cleaned = rawResponse
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  let generatedStudyPlan;
+  try {
+    generatedStudyPlan = JSON.parse(cleaned);
+  } catch (err) {
+    logger.error(`Failed to parse Gemini JSON response for exam plan: ${cleaned}`);
+    throw new AppError(
+      'Received an unexpected response format from Gemini. Please try again.',
+      502
+    );
+  }
+
+  // Store in DB
+  await Exam.create({
+    userId,
+    examName: examDetails.examName,
+    examDate: examDetails.examDate,
+    dailyStudyHours: examDetails.dailyStudyHours,
+    subjects: examDetails.subjects,
+    generatedStudyPlan
+  });
+
+  return {
+    success: true,
+    message: 'Study plan generated successfully.'
+  };
 };
 
-export const updateExam = async (examId, examData) => {
-  return await Exam.findByIdAndUpdate(examId, examData, { new: true });
+/**
+ * Retrieve the latest generated exam plan.
+ */
+export const getLatestPlan = async (userId) => {
+  const exam = await Exam.findOne({ userId }).sort({ createdAt: -1 }).lean();
+  
+  if (!exam) {
+    throw new AppError('No exam plan found. Please create one first.', 404);
+  }
+
+  return exam.generatedStudyPlan;
 };
 
-export const deleteExam = async (examId) => {
-  return await Exam.findByIdAndDelete(examId);
+/**
+ * Chat contextually with the latest exam plan and details.
+ */
+export const chatWithPlan = async (userId, question) => {
+  const exam = await Exam.findOne({ userId }).sort({ createdAt: -1 }).lean();
+  
+  if (!exam) {
+    throw new AppError('No exam plan found. Please create one first.', 404);
+  }
+
+  const examDetails = {
+    examName: exam.examName,
+    examDate: exam.examDate,
+    dailyStudyHours: exam.dailyStudyHours,
+    subjects: exam.subjects
+  };
+
+  const prompt = buildExamChatPrompt(examDetails, exam.generatedStudyPlan, question);
+  const answer = await callGemini(prompt);
+
+  return { answer: answer.trim() };
 };

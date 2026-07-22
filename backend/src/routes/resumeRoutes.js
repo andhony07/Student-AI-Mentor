@@ -18,6 +18,7 @@ const upload = multer({
 
 // Authentication will be added here when the auth module is merged
 router.post('/upload', upload.single('file'), resumeController.uploadResume);
-router.post('/analyze', resumeController.analyzeResume);
+router.get('/analyze', resumeController.analyzeResume);
+router.post('/chat', resumeController.chatWithResume);
 
 export default router;

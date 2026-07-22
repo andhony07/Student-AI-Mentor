@@ -1,26 +1,30 @@
 import mongoose from 'mongoose';
 
 const resumeSchema = new mongoose.Schema({
-  fileName: {
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  originalFilename: {
     type: String,
     required: true
   },
-  filePath: {
+  storedFilename: {
     type: String,
     required: true
   },
-  parsedText: {
-    type: String
+  resumeHash: {
+    type: String,
+    required: true
   },
-  analysis: {
-    skillsIdentified: [String],
-    experienceSummary: String,
-    educationSummary: String,
-    recommendations: [String],
-    rawGeminiResponse: mongoose.Schema.Types.Mixed
+  extractedText: {
+    type: String,
+    required: true
   }
 }, {
-  timestamps: true
+  timestamps: true // Automatically manages createdAt (Upload Timestamp) and updatedAt
 });
 
 const Resume = mongoose.model('Resume', resumeSchema);

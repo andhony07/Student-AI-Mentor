@@ -3,17 +3,16 @@ import ApiResponse from '../utils/apiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 export const getInternships = asyncHandler(async (req, res, next) => {
-  const result = await internshipService.getInternships();
+  const result = await internshipService.getInternships(req.user._id);
   return ApiResponse.success(res, 'Internship tracking records retrieved', { internships: result }, 200);
 });
 
 export const addInternship = asyncHandler(async (req, res, next) => {
-  const result = await internshipService.applyInternship(req.body);
+  const result = await internshipService.applyInternship(req.user._id, req.body);
   return ApiResponse.success(res, 'Internship tracking record added', { internship: result }, 201);
 });
 
 export const searchJobs = asyncHandler(async (req, res, next) => {
-  const { query } = req.query;
-  const result = await internshipService.searchExternalJobs(query || 'Backend');
-  return ApiResponse.success(res, 'Job search completed', result, 200);
+  const result = await internshipService.searchExternalJobs(req.user._id);
+  return ApiResponse.success(res, 'Internships fetched successfully based on latest Resume', result, 200);
 });

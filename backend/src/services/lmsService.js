@@ -47,12 +47,12 @@ const callGemini = async (prompt) => {
   }
 
   try {
-    const interaction = await ai.interactions.create({
+    const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",
-      input: prompt,
+      contents: prompt,
     });
 
-    return interaction.output_text;
+    return response.text;
   } catch (err) {
     logger.error(`Gemini API error: ${err.message}`);
     throw new AppError(`Gemini request failed: ${err.message}`, 502);
@@ -70,13 +70,14 @@ const callGemini = async (prompt) => {
  * @param {Buffer} fileBuffer - Raw file buffer from Multer memory storage
  * @returns {{ recordsInserted: number, skippedRows: number }}
  */
-export const uploadAndStoreLMS = async (fileBuffer) => {
+export const uploadAndStoreLMS = async (userId, fileBuffer) => {
   const { rows, totalRows, skippedRows } = parseLMSExcel(fileBuffer);
 
-  // Replace all existing records with the newly uploaded data
-  await LMSProgress.deleteMany({});
+  // Replace all existing records for this user with the newly uploaded data
+  await LMSProgress.deleteMany({ userId });
 
   const documents = rows.map((row) => ({
+    userId,
     course: row.course,
     module: row.module,
     completion: row.completion,
@@ -99,8 +100,8 @@ export const uploadAndStoreLMS = async (fileBuffer) => {
  *
  * @returns {Object} Structured analysis JSON parsed from Gemini response
  */
-export const analyzePerformance = async () => {
-  const records = await LMSProgress.find({}).lean();
+export const analyzePerformance = async (userId) => {
+  const records = await LMSProgress.find({ userId }).lean();
 
   if (!records.length) {
     throw new AppError(
@@ -141,8 +142,8 @@ export const analyzePerformance = async () => {
  * @param {string} question - Student's natural language question
  * @returns {{ answer: string }}
  */
-export const chatWithLMSData = async (question) => {
-  const records = await LMSProgress.find({}).lean();
+export const chatWithLMSData = async (userId, question) => {
+  const records = await LMSProgress.find({ userId }).lean();
 
   if (!records.length) {
     throw new AppError(
