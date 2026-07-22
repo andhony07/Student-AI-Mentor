@@ -12,6 +12,7 @@ import githubRoutes from './src/routes/githubRoutes.js';
 import examRoutes from './src/routes/examRoutes.js';
 import internshipRoutes from './src/routes/internshipRoutes.js';
 import aiRoutes from './src/routes/aiRoutes.js';
+import dailyMentorRoutes from './src/routes/dailyMentorRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +53,7 @@ app.use('/api/github', githubRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/internships', internshipRoutes);
 app.use('/api/mentor', aiRoutes);
+app.use('/api/daily-mentor', dailyMentorRoutes);
 
 // Catch-all 404 Route
 app.all('*', (req, res, next) => {
