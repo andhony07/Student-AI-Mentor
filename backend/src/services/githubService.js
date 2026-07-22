@@ -31,7 +31,12 @@ export const getGithubProfile = async (user) => {
       lastFetched: new Date()
     };
   } catch (error) {
-    throw new AppError('Failed to fetch GitHub profile. Please check if the username is correct.', 500);
+    if (error.response?.status === 404) {
+      throw new AppError('GitHub username not found.', 404);
+    }
+    const status = error.response?.status || 500;
+    const msg = error.response?.data?.message || 'Failed to fetch GitHub profile. Please check if the username is correct.';
+    throw new AppError(msg, status);
   }
 };
 

@@ -41,7 +41,13 @@ const callGemini = async (prompt) => {
  * @returns {Object}
  */
 export const uploadAndParseResume = async (userId, fileBuffer, originalName) => {
-  const parsed = await parsePDF(fileBuffer);
+  let parsed;
+  try {
+    parsed = await parsePDF(fileBuffer);
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError('This PDF could not be parsed. Please upload a valid PDF.', 400);
+  }
   
   const extractedText = parsed.text;
   const resumeHash = hashResumeText(extractedText);
@@ -49,22 +55,35 @@ export const uploadAndParseResume = async (userId, fileBuffer, originalName) => 
   // Check for duplicates for this specific user
   const existingResume = await Resume.findOne({ userId, resumeHash });
   if (existingResume) {
+    // Update the createdAt timestamp so it becomes the latest uploaded resume again
+    await Resume.findByIdAndUpdate(existingResume._id, { createdAt: new Date(), originalFilename: originalName });
     return {
       success: true,
       duplicate: true,
-      message: 'Resume already exists.'
+      message: 'Resume already uploaded. Re-analyzing existing file.'
     };
   }
 
   const storedFilename = `${Date.now()}_${originalName}`;
   
-  await Resume.create({
-    userId,
-    originalFilename: originalName,
-    storedFilename,
-    resumeHash,
-    extractedText
-  });
+  try {
+    await Resume.create({
+      userId,
+      originalFilename: originalName,
+      storedFilename,
+      resumeHash,
+      extractedText
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return {
+        success: true,
+        duplicate: true,
+        message: 'Resume already uploaded.'
+      };
+    }
+    throw err;
+  }
 
   return {
     success: true,
