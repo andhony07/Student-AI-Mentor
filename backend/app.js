@@ -9,7 +9,6 @@ import { globalErrorHandler } from './src/middlewares/errorMiddleware.js';
 import lmsRoutes from './src/routes/lmsRoutes.js';
 import resumeRoutes from './src/routes/resumeRoutes.js';
 import githubRoutes from './src/routes/githubRoutes.js';
-import taskRoutes from './src/routes/taskRoutes.js';
 import examRoutes from './src/routes/examRoutes.js';
 import internshipRoutes from './src/routes/internshipRoutes.js';
 import aiRoutes from './src/routes/aiRoutes.js';
@@ -50,7 +49,6 @@ app.get('/health', (req, res) => {
 app.use('/api/lms', lmsRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/github', githubRoutes);
-app.use('/api/tasks', taskRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/internships', internshipRoutes);
 app.use('/api/mentor', aiRoutes);
