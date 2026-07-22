@@ -21,7 +21,7 @@ export const chat = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const result = await dailyMentorService.chat(question.trim(), conversationId);
+  const result = await dailyMentorService.chat(req.user._id, question.trim(), conversationId);
 
   return ApiResponse.success(
     res,

@@ -13,6 +13,12 @@ const subjectSchema = new mongoose.Schema({
 }, { _id: false });
 
 const examSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
   examName: {
     type: String,
     required: true

@@ -31,7 +31,7 @@ export const uploadLMS = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const { recordsInserted, skippedRows } = await lmsService.uploadAndStoreLMS(req.file.buffer);
+  const { recordsInserted, skippedRows } = await lmsService.uploadAndStoreLMS(req.user._id, req.file.buffer);
 
   return res.status(200).json({
     success: true,
@@ -46,7 +46,7 @@ export const uploadLMS = asyncHandler(async (req, res, next) => {
  * Reads stored LMS records and generates a Gemini-powered analysis report.
  */
 export const analyzeLMS = asyncHandler(async (req, res, next) => {
-  const analysis = await lmsService.analyzePerformance();
+  const analysis = await lmsService.analyzePerformance(req.user._id);
   return ApiResponse.success(res, 'LMS analysis generated successfully', analysis, 200);
 });
 
@@ -61,6 +61,6 @@ export const chatWithLMS = asyncHandler(async (req, res, next) => {
     return next(new AppError('Please provide a question in the request body.', 400));
   }
 
-  const result = await lmsService.chatWithLMSData(String(question).trim());
+  const result = await lmsService.chatWithLMSData(req.user._id, String(question).trim());
   return ApiResponse.success(res, 'AI Mentor response generated', result, 200);
 });

@@ -40,14 +40,14 @@ const callGemini = async (prompt) => {
  * @param {string} originalName
  * @returns {Object}
  */
-export const uploadAndParseResume = async (fileBuffer, originalName) => {
+export const uploadAndParseResume = async (userId, fileBuffer, originalName) => {
   const parsed = await parsePDF(fileBuffer);
   
   const extractedText = parsed.text;
   const resumeHash = hashResumeText(extractedText);
 
-  // Check for duplicates
-  const existingResume = await Resume.findOne({ resumeHash });
+  // Check for duplicates for this specific user
+  const existingResume = await Resume.findOne({ userId, resumeHash });
   if (existingResume) {
     return {
       success: true,
@@ -59,6 +59,7 @@ export const uploadAndParseResume = async (fileBuffer, originalName) => {
   const storedFilename = `${Date.now()}_${originalName}`;
   
   await Resume.create({
+    userId,
     originalFilename: originalName,
     storedFilename,
     resumeHash,
@@ -78,9 +79,9 @@ export const uploadAndParseResume = async (fileBuffer, originalName) => {
  *
  * @returns {Object} Structured analysis JSON parsed from Gemini response
  */
-export const analyzeLatestResume = async () => {
-  // Read the latest uploaded resume
-  const resume = await Resume.findOne().sort({ createdAt: -1 });
+export const analyzeLatestResume = async (userId) => {
+  // Read the latest uploaded resume for this user
+  const resume = await Resume.findOne({ userId }).sort({ createdAt: -1 });
   
   if (!resume) {
     throw new AppError('No resume data found. Please upload your resume PDF first.', 404);
@@ -117,8 +118,8 @@ export const analyzeLatestResume = async () => {
  * @param {string} question - Student's natural language question
  * @returns {Object}
  */
-export const chatWithLatestResume = async (question) => {
-  const resume = await Resume.findOne().sort({ createdAt: -1 });
+export const chatWithLatestResume = async (userId, question) => {
+  const resume = await Resume.findOne({ userId }).sort({ createdAt: -1 });
   
   if (!resume) {
     throw new AppError('No resume data found. Please upload your resume PDF first.', 404);

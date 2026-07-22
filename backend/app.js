@@ -6,6 +6,7 @@ import AppError from './src/utils/errorHandler.js';
 import { globalErrorHandler } from './src/middlewares/errorMiddleware.js';
 
 // Route imports
+import authRoutes from './src/routes/authRoutes.js';
 import lmsRoutes from './src/routes/lmsRoutes.js';
 import resumeRoutes from './src/routes/resumeRoutes.js';
 import githubRoutes from './src/routes/githubRoutes.js';
@@ -13,6 +14,7 @@ import examRoutes from './src/routes/examRoutes.js';
 import internshipRoutes from './src/routes/internshipRoutes.js';
 import aiRoutes from './src/routes/aiRoutes.js';
 import dailyMentorRoutes from './src/routes/dailyMentorRoutes.js';
+import { protect } from './src/middlewares/authMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,13 +49,14 @@ app.get('/health', (req, res) => {
 });
 
 // Mount Routes
-app.use('/api/lms', lmsRoutes);
-app.use('/api/resume', resumeRoutes);
-app.use('/api/github', githubRoutes);
-app.use('/api/exams', examRoutes);
-app.use('/api/internships', internshipRoutes);
-app.use('/api/mentor', aiRoutes);
-app.use('/api/daily-mentor', dailyMentorRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/lms', protect, lmsRoutes);
+app.use('/api/resume', protect, resumeRoutes);
+app.use('/api/github', protect, githubRoutes);
+app.use('/api/exams', protect, examRoutes);
+app.use('/api/internships', protect, internshipRoutes);
+app.use('/api/mentor', protect, aiRoutes);
+app.use('/api/daily-mentor', protect, dailyMentorRoutes);
 
 // Catch-all 404 Route
 app.all('*', (req, res, next) => {

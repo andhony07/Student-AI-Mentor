@@ -31,7 +31,7 @@ const callGemini = async (prompt) => {
 /**
  * Save exam details, generate a personalized study plan using Gemini, and store it.
  */
-export const createStudyPlan = async (examDetails) => {
+export const createStudyPlan = async (userId, examDetails) => {
   const prompt = buildExamPlannerPrompt(examDetails);
   const rawResponse = await callGemini(prompt);
 
@@ -55,6 +55,7 @@ export const createStudyPlan = async (examDetails) => {
 
   // Store in DB
   await Exam.create({
+    userId,
     examName: examDetails.examName,
     examDate: examDetails.examDate,
     dailyStudyHours: examDetails.dailyStudyHours,
@@ -71,8 +72,8 @@ export const createStudyPlan = async (examDetails) => {
 /**
  * Retrieve the latest generated exam plan.
  */
-export const getLatestPlan = async () => {
-  const exam = await Exam.findOne().sort({ createdAt: -1 }).lean();
+export const getLatestPlan = async (userId) => {
+  const exam = await Exam.findOne({ userId }).sort({ createdAt: -1 }).lean();
   
   if (!exam) {
     throw new AppError('No exam plan found. Please create one first.', 404);
@@ -84,8 +85,8 @@ export const getLatestPlan = async () => {
 /**
  * Chat contextually with the latest exam plan and details.
  */
-export const chatWithPlan = async (question) => {
-  const exam = await Exam.findOne().sort({ createdAt: -1 }).lean();
+export const chatWithPlan = async (userId, question) => {
+  const exam = await Exam.findOne({ userId }).sort({ createdAt: -1 }).lean();
   
   if (!exam) {
     throw new AppError('No exam plan found. Please create one first.', 404);

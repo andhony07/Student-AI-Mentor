@@ -2,6 +2,12 @@ import mongoose from 'mongoose';
 
 const lmsProgressSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true
+    },
     course: {
       type: String,
       required: true,

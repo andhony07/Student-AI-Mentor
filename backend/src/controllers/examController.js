@@ -41,12 +41,12 @@ export const createExam = asyncHandler(async (req, res, next) => {
     }
   }
 
-  const result = await examService.createStudyPlan(req.body);
+  const result = await examService.createStudyPlan(req.user._id, req.body);
   return res.status(201).json(result);
 });
 
 export const getPlan = asyncHandler(async (req, res, next) => {
-  const result = await examService.getLatestPlan();
+  const result = await examService.getLatestPlan(req.user._id);
   return res.status(200).json(result);
 });
 
@@ -57,6 +57,6 @@ export const chatWithPlan = asyncHandler(async (req, res, next) => {
     return next(new AppError('Please provide a question in the request body.', 400));
   }
 
-  const result = await examService.chatWithPlan(String(question).trim());
+  const result = await examService.chatWithPlan(req.user._id, String(question).trim());
   return res.status(200).json(result);
 });

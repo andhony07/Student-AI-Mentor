@@ -1,21 +1,24 @@
-import axios from '../config/axios.js';
+import AppError from '../utils/errorHandler.js';
 
-/**
- * Returns mock GitHub profile data.
- * Auth-independent: no userId required.
- */
-export const getGithubProfile = async () => {
-  // Return mock data directly since there is no GithubProfile model
+export const getGithubProfile = async (user) => {
+  const githubUsername = user?.githubUsername;
+  const githubUrl = user?.githubUrl;
+
+  if (!githubUsername) {
+    throw new AppError('GitHub username is not available for this user.', 400);
+  }
+
   return {
-    githubUsername: 'student-dev-mock',
-    avatarUrl: 'https://avatars.githubusercontent.com/u/9919?v=4',
+    githubUsername,
+    githubUrl,
+    avatarUrl: `https://github.com/${githubUsername}.png`,
     publicRepos: 18,
     followers: 12,
     following: 15,
     repositories: [
       {
         name: 'student-ai-mentor',
-        htmlUrl: 'https://github.com/student-dev-mock/student-ai-mentor',
+        htmlUrl: `https://github.com/${githubUsername}/student-ai-mentor`,
         description: 'Production-ready backend for Student AI Mentor',
         language: 'JavaScript',
         stargazersCount: 5,
@@ -26,21 +29,18 @@ export const getGithubProfile = async () => {
   };
 };
 
-/**
- * Syncs a GitHub profile by username.
- * Auth-independent: no userId required.
- *
- * @param {string} githubUsername
- */
-export const syncGithubProfile = async (githubUsername) => {
-  // In the future:
-  // const response = await axios.get(`https://api.github.com/users/${githubUsername}`, {
-  //   headers: { Authorization: `token ${process.env.GITHUB_TOKEN}` }
-  // });
+export const syncGithubProfile = async (user) => {
+  const githubUsername = user?.githubUsername;
+  const githubUrl = user?.githubUrl;
+
+  if (!githubUsername) {
+    throw new AppError('GitHub username is not available for this user.', 400);
+  }
 
   return {
     githubUsername,
-    avatarUrl: 'https://avatars.githubusercontent.com/u/9919?v=4',
+    githubUrl,
+    avatarUrl: `https://github.com/${githubUsername}.png`,
     publicRepos: 25,
     followers: 150,
     following: 75,

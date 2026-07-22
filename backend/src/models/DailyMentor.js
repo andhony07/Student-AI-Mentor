@@ -3,6 +3,12 @@ import logger from '../utils/logger.js';
 
 const dailyMentorSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true
+    },
     conversationId: {
       // No index:true here — the compound index below covers all queries.
       // A field-level index would create a separate conversationId_1 index
@@ -24,9 +30,9 @@ const dailyMentorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Non-unique compound index — groups messages by conversation and orders them
+// Non-unique compound index — groups messages by user, conversation and orders them
 // chronologically. This is the ONLY index on conversationId.
-dailyMentorSchema.index({ conversationId: 1, createdAt: 1 });
+dailyMentorSchema.index({ userId: 1, conversationId: 1, createdAt: 1 });
 
 const DailyMentor = mongoose.model('DailyMentor', dailyMentorSchema);
 

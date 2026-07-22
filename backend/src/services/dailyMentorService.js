@@ -134,11 +134,11 @@ const summarizeExam = (exam) => {
  *
  * @returns {Object} { lms, resume, exam }
  */
-const gatherStudentContext = async () => {
+const gatherStudentContext = async (userId) => {
   const [lmsResult, resumeResult, examResult] = await Promise.allSettled([
-    LMSProgress.find({}).lean(),
-    Resume.findOne().sort({ createdAt: -1 }).lean(),
-    Exam.findOne().sort({ createdAt: -1 }).lean(),
+    LMSProgress.find({ userId }).lean(),
+    Resume.findOne({ userId }).sort({ createdAt: -1 }).lean(),
+    Exam.findOne({ userId }).sort({ createdAt: -1 }).lean(),
   ]);
 
   const lmsRecords =
@@ -179,15 +179,15 @@ const MAX_HISTORY_MESSAGES = 10;
  * @param {string|null} conversationId  - Existing conversation ID (optional)
  * @returns {{ conversationId: string, answer: string }}
  */
-export const chat = async (question, conversationId) => {
+export const chat = async (userId, question, conversationId) => {
   // Generate new conversation ID if none provided
   const convId = conversationId || uuidv4();
 
   // 1. Gather student context from all modules
-  const studentContext = await gatherStudentContext();
+  const studentContext = await gatherStudentContext(userId);
 
   // 2. Fetch conversation history
-  const previousMessages = await DailyMentor.find({ conversationId: convId })
+  const previousMessages = await DailyMentor.find({ userId, conversationId: convId })
     .sort({ createdAt: 1 })
     .limit(MAX_HISTORY_MESSAGES)
     .lean();
@@ -210,8 +210,8 @@ export const chat = async (question, conversationId) => {
 
   // 5. Persist both messages
   await DailyMentor.insertMany([
-    { conversationId: convId, role: 'user', content: question },
-    { conversationId: convId, role: 'assistant', content: answer },
+    { userId, conversationId: convId, role: 'user', content: question },
+    { userId, conversationId: convId, role: 'assistant', content: answer },
   ]);
 
   logger.info(`Daily Mentor chat — conversation: ${convId}`);
