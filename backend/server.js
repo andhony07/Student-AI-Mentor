@@ -1,4 +1,9 @@
-import dotenv from 'dotenv';
+// MUST be the very first import — ES module `import` statements are
+// statically hoisted and resolved before any code in this file executes.
+// Importing env.js first guarantees dotenv.config() runs before any
+// downstream module (e.g. gemini.js) reads process.env.
+import './src/config/env.js';
+
 import app from './app.js';
 import { connectDB } from './src/database/db.js';
 import logger from './src/utils/logger.js';
@@ -9,9 +14,6 @@ process.on('uncaughtException', (err) => {
   logger.error(`${err.name}: ${err.message}`, err.stack);
   process.exit(1);
 });
-
-// Load Env variables
-dotenv.config();
 
 // Connect MongoDB database
 connectDB();

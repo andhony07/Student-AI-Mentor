@@ -1,10 +1,9 @@
 import express from 'express';
 import * as internshipController from '../controllers/internshipController.js';
-import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(protect);
+// Authentication will be added here when the auth module is merged
 router.get('/', internshipController.getInternships);
 router.post('/', internshipController.addInternship);
 router.get('/search', internshipController.searchJobs);

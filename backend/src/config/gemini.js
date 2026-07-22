@@ -3,14 +3,18 @@ import logger from '../utils/logger.js';
 
 const apiKey = process.env.GEMINI_API_KEY;
 
-if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-  logger.warn('GEMINI_API_KEY is not configured or uses placeholder value.');
+// Debug logs — confirm .env was loaded before this module executed
+console.log('Gemini Key Loaded:', apiKey ? 'YES' : 'NO');
+console.log('Gemini Key Prefix:', apiKey?.substring(0, 6));
+
+let geminiClient = null;
+
+if (!apiKey) {
+  logger.warn('GEMINI_API_KEY is not configured. Add it to your .env file.');
+} else {
+  // Initialize the real @google/genai client
+  geminiClient = new GoogleGenAI({ apiKey });
+  logger.info('Gemini Client Initialized Successfully');
 }
 
-// In standard usage of @google/genai:
-// const ai = new GoogleGenAI({ apiKey });
-export const ai = apiKey && apiKey !== 'your_gemini_api_key_here'
-  ? new GoogleGenAI({ apiKey })
-  : null;
-
-logger.info('Gemini API client initialized (placeholder wrapper).');
+export const ai = geminiClient;

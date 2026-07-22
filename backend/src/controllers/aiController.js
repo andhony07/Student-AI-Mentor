@@ -9,6 +9,6 @@ export const askMentor = asyncHandler(async (req, res, next) => {
     return next(new AppError('Please provide a message query in the request body', 400));
   }
 
-  const result = await aiService.askMentor(req.user._id, message);
+  const result = await aiService.askMentor(message);
   return ApiResponse.success(res, 'AI Mentor responded successfully', result, 200);
 });

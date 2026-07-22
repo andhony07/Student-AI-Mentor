@@ -1,10 +1,9 @@
 import express from 'express';
 import * as aiController from '../controllers/aiController.js';
-import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(protect);
+// Authentication will be added here when the auth module is merged
 router.post('/', aiController.askMentor);
 
 export default router;

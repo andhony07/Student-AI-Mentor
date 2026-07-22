@@ -1,6 +1,12 @@
 import { ai } from '../config/gemini.js';
 
-export const askMentor = async (userId, userMessage) => {
+/**
+ * Returns a placeholder AI mentor response.
+ * Auth-independent: no userId required.
+ *
+ * @param {string} userMessage
+ */
+export const askMentor = async (userMessage) => {
   // Placeholder Gemini AI Integration.
   // Code snippet using @google/genai:
   // if (ai) {
@@ -10,7 +16,7 @@ export const askMentor = async (userId, userMessage) => {
   //   });
   //   return { response: response.text };
   // }
-  
+
   return {
     response: `This is a placeholder response from the Student AI Mentor. You asked: "${userMessage}". In the next phase, the Gemini API (using the @google/genai SDK) will be connected here.`,
     suggestedTopics: [

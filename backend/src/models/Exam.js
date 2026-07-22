@@ -1,11 +1,6 @@
 import mongoose from 'mongoose';
 
 const examSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
   subject: {
     type: String,
     required: true

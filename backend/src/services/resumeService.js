@@ -3,14 +3,20 @@ import { ai } from '../config/gemini.js';
 import Resume from '../models/Resume.js';
 import AppError from '../utils/errorHandler.js';
 
-export const uploadAndParseResume = async (userId, fileBuffer, fileName) => {
+/**
+ * Parse and store an uploaded PDF resume.
+ * Auth-independent: no userId required.
+ *
+ * @param {Buffer} fileBuffer
+ * @param {string} fileName
+ * @returns {Object}
+ */
+export const uploadAndParseResume = async (fileBuffer, fileName) => {
   const parsed = await parsePDF(fileBuffer);
-  
-  // In a real application, you would save the file to uploads/resumes/
+
   const mockPath = `uploads/resumes/${Date.now()}_${fileName}`;
-  
+
   const resume = await Resume.create({
-    user: userId,
     fileName,
     filePath: mockPath,
     parsedText: parsed.text,
@@ -30,6 +36,12 @@ export const uploadAndParseResume = async (userId, fileBuffer, fileName) => {
   };
 };
 
+/**
+ * Run (placeholder) Gemini analysis on a stored resume by ID.
+ *
+ * @param {string} resumeId
+ * @returns {Object}
+ */
 export const analyzeResume = async (resumeId) => {
   const resume = await Resume.findById(resumeId);
   if (!resume) {
@@ -44,7 +56,7 @@ export const analyzeResume = async (resumeId) => {
   //     contents: 'Analyze this resume...'
   //   });
   // }
-  
+
   const mockAnalysis = {
     skillsIdentified: ['React', 'Node.js', 'Express.js', 'JavaScript', 'MongoDB', 'Python'],
     experienceSummary: 'Has completed multiple academic projects and a Web Development Internship.',

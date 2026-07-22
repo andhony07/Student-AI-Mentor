@@ -9,7 +9,6 @@ export const uploadResume = asyncHandler(async (req, res, next) => {
   }
 
   const result = await resumeService.uploadAndParseResume(
-    req.user._id,
     req.file.buffer,
     req.file.originalname
   );

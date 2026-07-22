@@ -1,6 +1,10 @@
 import axios from '../config/axios.js';
 
-export const getInternships = async (userId) => {
+/**
+ * Returns mock internship tracking records.
+ * Auth-independent: no userId required.
+ */
+export const getInternships = async () => {
   // Return mock listings directly since there is no Internship database model
   return [
     {
@@ -13,22 +17,33 @@ export const getInternships = async (userId) => {
   ];
 };
 
-export const applyInternship = async (userId, internshipData) => {
+/**
+ * Records a new internship application.
+ * Auth-independent: no userId required.
+ *
+ * @param {Object} internshipData
+ */
+export const applyInternship = async (internshipData) => {
   return {
     ...internshipData,
-    user: userId,
     status: internshipData.status || 'interested',
     applicationDate: new Date()
   };
 };
 
+/**
+ * Searches external job listings by query keyword.
+ * Placeholder for future Jobs API integration.
+ *
+ * @param {string} query
+ */
 export const searchExternalJobs = async (query) => {
   // Placeholder for future Jobs API integration using process.env.JOB_API_KEY
   // Example:
   // const response = await axios.get(`https://jobsapi.com/v1/search?q=${query}`, {
   //   headers: { 'Authorization': `Bearer ${process.env.JOB_API_KEY}` }
   // });
-  
+
   return {
     source: 'External Jobs API (Placeholder)',
     query,

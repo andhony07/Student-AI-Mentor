@@ -1,6 +1,10 @@
 import axios from '../config/axios.js';
 
-export const getGithubProfile = async (userId) => {
+/**
+ * Returns mock GitHub profile data.
+ * Auth-independent: no userId required.
+ */
+export const getGithubProfile = async () => {
   // Return mock data directly since there is no GithubProfile model
   return {
     githubUsername: 'student-dev-mock',
@@ -22,12 +26,18 @@ export const getGithubProfile = async (userId) => {
   };
 };
 
-export const syncGithubProfile = async (userId, githubUsername) => {
+/**
+ * Syncs a GitHub profile by username.
+ * Auth-independent: no userId required.
+ *
+ * @param {string} githubUsername
+ */
+export const syncGithubProfile = async (githubUsername) => {
   // In the future:
   // const response = await axios.get(`https://api.github.com/users/${githubUsername}`, {
   //   headers: { Authorization: `token ${process.env.GITHUB_TOKEN}` }
   // });
-  
+
   return {
     githubUsername,
     avatarUrl: 'https://avatars.githubusercontent.com/u/9919?v=4',

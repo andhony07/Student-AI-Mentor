@@ -1,7 +1,6 @@
 import express from 'express';
 import multer from 'multer';
 import * as resumeController from '../controllers/resumeController.js';
-import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -17,7 +16,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-router.use(protect);
+// Authentication will be added here when the auth module is merged
 router.post('/upload', upload.single('file'), resumeController.uploadResume);
 router.post('/analyze', resumeController.analyzeResume);
 

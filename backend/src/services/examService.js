@@ -1,21 +1,17 @@
 import Exam from '../models/Exam.js';
 
-export const getExams = async (userId) => {
-  return await Exam.find({ user: userId });
+export const getExams = async () => {
+  return await Exam.find({});
 };
 
-export const createExam = async (userId, examData) => {
-  return await Exam.create({ ...examData, user: userId });
+export const createExam = async (examData) => {
+  return await Exam.create(examData);
 };
 
-export const updateExam = async (examId, userId, examData) => {
-  return await Exam.findOneAndUpdate(
-    { _id: examId, user: userId },
-    examData,
-    { new: true }
-  );
+export const updateExam = async (examId, examData) => {
+  return await Exam.findByIdAndUpdate(examId, examData, { new: true });
 };
 
-export const deleteExam = async (examId, userId) => {
-  return await Exam.findOneAndDelete({ _id: examId, user: userId });
+export const deleteExam = async (examId) => {
+  return await Exam.findByIdAndDelete(examId);
 };
