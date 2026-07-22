@@ -1,37 +1,37 @@
-import axios from 'axios'; // We will use plain axios for external API calls, since config/axios.js might have a base URL or interceptors.
+import axios from 'axios';
 import Resume from '../models/Resume.js';
+import Internship from '../models/Internship.js';
 import AppError from '../utils/errorHandler.js';
 import logger from '../utils/logger.js';
 
 /**
- * Returns mock internship tracking records.
- * Auth-independent: no userId required.
+ * Returns internship tracking records for the user.
+ *
+ * @param {string} userId
  */
-export const getInternships = async () => {
-  // Return mock listings directly since there is no Internship database model
-  return [
-    {
-      companyName: 'Tech Innovators',
-      role: 'Backend Intern (Mock)',
-      status: 'applied',
-      applicationDate: new Date(),
-      notes: 'Applied through company portal'
-    }
-  ];
+export const getInternships = async (userId) => {
+  return await Internship.find({ userId }).sort({ applicationDate: -1 });
 };
 
 /**
  * Records a new internship application.
- * Auth-independent: no userId required.
  *
+ * @param {string} userId
  * @param {Object} internshipData
  */
-export const applyInternship = async (internshipData) => {
-  return {
+export const applyInternship = async (userId, internshipData) => {
+  if (!internshipData.companyName || !internshipData.role) {
+    throw new AppError('Company name and role are required.', 400);
+  }
+
+  const internship = await Internship.create({
+    userId,
     ...internshipData,
     status: internshipData.status || 'interested',
-    applicationDate: new Date()
-  };
+    applicationDate: internshipData.applicationDate || new Date()
+  });
+
+  return internship;
 };
 
 /**
@@ -52,7 +52,7 @@ const extractTargetRole = (text) => {
  * Searches external job listings based on the student's latest Resume.
  */
 export const searchExternalJobs = async (userId) => {
-  const resume = await Resume.findOne({ userId }).sort({ createdAt: -1 });
+  const resume = await Resume.findOne({ user: userId }).sort({ createdAt: -1 });
 
   if (!resume) {
     throw new AppError('No resume data found. Please upload your resume PDF first to find internships.', 404);

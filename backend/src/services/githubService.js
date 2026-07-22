@@ -1,3 +1,4 @@
+import axios from 'axios';
 import AppError from '../utils/errorHandler.js';
 
 export const getGithubProfile = async (user) => {
@@ -8,52 +9,32 @@ export const getGithubProfile = async (user) => {
     throw new AppError('GitHub username is not available for this user.', 400);
   }
 
-  return {
-    githubUsername,
-    githubUrl,
-    avatarUrl: `https://github.com/${githubUsername}.png`,
-    publicRepos: 18,
-    followers: 12,
-    following: 15,
-    repositories: [
-      {
-        name: 'student-ai-mentor',
-        htmlUrl: `https://github.com/${githubUsername}/student-ai-mentor`,
-        description: 'Production-ready backend for Student AI Mentor',
-        language: 'JavaScript',
-        stargazersCount: 5,
-        forksCount: 2
-      }
-    ],
-    lastFetched: new Date()
-  };
+  try {
+    const profileResponse = await axios.get(`https://api.github.com/users/${githubUsername}`);
+    const reposResponse = await axios.get(`https://api.github.com/users/${githubUsername}/repos?sort=updated&per_page=5`);
+    
+    return {
+      githubUsername,
+      githubUrl,
+      avatarUrl: profileResponse.data.avatar_url,
+      publicRepos: profileResponse.data.public_repos,
+      followers: profileResponse.data.followers,
+      following: profileResponse.data.following,
+      repositories: reposResponse.data.map(repo => ({
+        name: repo.name,
+        htmlUrl: repo.html_url,
+        description: repo.description,
+        language: repo.language,
+        stargazersCount: repo.stargazers_count,
+        forksCount: repo.forks_count
+      })),
+      lastFetched: new Date()
+    };
+  } catch (error) {
+    throw new AppError('Failed to fetch GitHub profile. Please check if the username is correct.', 500);
+  }
 };
 
 export const syncGithubProfile = async (user) => {
-  const githubUsername = user?.githubUsername;
-  const githubUrl = user?.githubUrl;
-
-  if (!githubUsername) {
-    throw new AppError('GitHub username is not available for this user.', 400);
-  }
-
-  return {
-    githubUsername,
-    githubUrl,
-    avatarUrl: `https://github.com/${githubUsername}.png`,
-    publicRepos: 25,
-    followers: 150,
-    following: 75,
-    repositories: [
-      {
-        name: 'ai-learning-assistant',
-        htmlUrl: `https://github.com/${githubUsername}/ai-learning-assistant`,
-        description: 'Mock repository details from sync',
-        language: 'JavaScript',
-        stargazersCount: 12,
-        forksCount: 4
-      }
-    ],
-    lastFetched: new Date()
-  };
+  return await getGithubProfile(user);
 };

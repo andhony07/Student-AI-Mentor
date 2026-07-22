@@ -47,12 +47,12 @@ const callGemini = async (prompt) => {
   }
 
   try {
-    const interaction = await ai.interactions.create({
+    const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",
-      input: prompt,
+      contents: prompt,
     });
 
-    return interaction.output_text;
+    return response.text;
   } catch (err) {
     logger.error(`Gemini API error: ${err.message}`);
     throw new AppError(`Gemini request failed: ${err.message}`, 502);

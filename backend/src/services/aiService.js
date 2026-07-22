@@ -1,28 +1,37 @@
 import { ai } from '../config/gemini.js';
+import AppError from '../utils/errorHandler.js';
+import logger from '../utils/logger.js';
 
 /**
- * Returns a placeholder AI mentor response.
+ * Call Gemini with a given user message.
  * Auth-independent: no userId required.
  *
  * @param {string} userMessage
  */
 export const askMentor = async (userMessage) => {
-  // Placeholder Gemini AI Integration.
-  // Code snippet using @google/genai:
-  // if (ai) {
-  //   const response = await ai.models.generateContent({
-  //     model: 'gemini-2.0-flash',
-  //     contents: userMessage
-  //   });
-  //   return { response: response.text };
-  // }
+  if (!ai) {
+    throw new AppError(
+      'Gemini API is not configured. Please set GEMINI_API_KEY in your .env file.',
+      503
+    );
+  }
 
-  return {
-    response: `This is a placeholder response from the Student AI Mentor. You asked: "${userMessage}". In the next phase, the Gemini API (using the @google/genai SDK) will be connected here.`,
-    suggestedTopics: [
-      'How to optimize my resume for ATS?',
-      'Create a study planner for my DBMS exam',
-      'Recommend coding exercises for recursion'
-    ]
-  };
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: userMessage
+    });
+    
+    return { 
+      response: response.text,
+      suggestedTopics: [
+        'How to optimize my resume for ATS?',
+        'Create a study planner for my DBMS exam',
+        'Recommend coding exercises for recursion'
+      ]
+    };
+  } catch (err) {
+    logger.error(`Gemini API error (AI Mentor): ${err.message}`);
+    throw new AppError(`Gemini request failed: ${err.message}`, 502);
+  }
 };
