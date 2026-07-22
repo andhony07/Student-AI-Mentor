@@ -13,7 +13,6 @@ export const addInternship = asyncHandler(async (req, res, next) => {
 });
 
 export const searchJobs = asyncHandler(async (req, res, next) => {
-  const { query } = req.query;
-  const result = await internshipService.searchExternalJobs(query || 'Backend');
-  return ApiResponse.success(res, 'Job search completed', result, 200);
+  const result = await internshipService.searchExternalJobs();
+  return ApiResponse.success(res, 'Internships fetched successfully based on latest Resume', result, 200);
 });
