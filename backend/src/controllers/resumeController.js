@@ -12,15 +12,21 @@ export const uploadResume = asyncHandler(async (req, res, next) => {
     req.file.buffer,
     req.file.originalname
   );
-  return ApiResponse.success(res, 'Resume uploaded and parsed successfully', result, 200);
+  
+  return res.status(200).json(result);
 });
 
 export const analyzeResume = asyncHandler(async (req, res, next) => {
-  const { resumeId } = req.body;
-  if (!resumeId) {
-    return next(new AppError('Please provide a resumeId in the request body', 400));
+  const result = await resumeService.analyzeLatestResume();
+  return res.status(200).json(result);
+});
+
+export const chatWithResume = asyncHandler(async (req, res, next) => {
+  const { question } = req.body;
+  if (!question || String(question).trim() === '') {
+    return next(new AppError('Please provide a question in the request body.', 400));
   }
 
-  const result = await resumeService.analyzeResume(resumeId);
-  return ApiResponse.success(res, 'Resume analysis successful', result, 200);
+  const result = await resumeService.chatWithLatestResume(String(question).trim());
+  return res.status(200).json(result);
 });

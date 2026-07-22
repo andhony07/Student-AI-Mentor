@@ -1,77 +1,131 @@
 import { parsePDF } from '../utils/pdfParser.js';
+import { hashResumeText } from '../utils/hashResume.js';
 import { ai } from '../config/gemini.js';
+import { buildResumeAnalysisPrompt } from '../prompts/resumeAnalysisPrompt.js';
+import { buildResumeChatPrompt } from '../prompts/resumeChatPrompt.js';
 import Resume from '../models/Resume.js';
 import AppError from '../utils/errorHandler.js';
+import logger from '../utils/logger.js';
+
+/**
+ * Call Gemini with a given prompt string.
+ * Returns the raw text response.
+ * Throws AppError if Gemini is not configured.
+ */
+const callGemini = async (prompt) => {
+  if (!ai) {
+    throw new AppError(
+      'Gemini API is not configured. Please set GEMINI_API_KEY in your .env file.',
+      503
+    );
+  }
+
+  try {
+    const interaction = await ai.interactions.create({
+      model: "gemini-3.6-flash",
+      input: prompt,
+    });
+    return interaction.output_text;
+  } catch (err) {
+    logger.error(`Gemini API error: ${err.message}`);
+    throw new AppError(`Gemini request failed: ${err.message}`, 502);
+  }
+};
 
 /**
  * Parse and store an uploaded PDF resume.
- * Auth-independent: no userId required.
+ * Auth-independent: deduplicates based on extracted text hash.
  *
  * @param {Buffer} fileBuffer
- * @param {string} fileName
+ * @param {string} originalName
  * @returns {Object}
  */
-export const uploadAndParseResume = async (fileBuffer, fileName) => {
+export const uploadAndParseResume = async (fileBuffer, originalName) => {
   const parsed = await parsePDF(fileBuffer);
+  
+  const extractedText = parsed.text;
+  const resumeHash = hashResumeText(extractedText);
 
-  const mockPath = `uploads/resumes/${Date.now()}_${fileName}`;
+  // Check for duplicates
+  const existingResume = await Resume.findOne({ resumeHash });
+  if (existingResume) {
+    return {
+      success: true,
+      duplicate: true,
+      message: 'Resume already exists.'
+    };
+  }
 
-  const resume = await Resume.create({
-    fileName,
-    filePath: mockPath,
-    parsedText: parsed.text,
-    analysis: {
-      skillsIdentified: [],
-      experienceSummary: 'Pending analysis',
-      educationSummary: 'Pending analysis',
-      recommendations: []
-    }
+  const storedFilename = `${Date.now()}_${originalName}`;
+  
+  await Resume.create({
+    originalFilename: originalName,
+    storedFilename,
+    resumeHash,
+    extractedText
   });
 
   return {
-    message: 'Resume uploaded and parsed successfully',
-    resumeId: resume._id,
-    parsedTextPreview: parsed.text ? parsed.text.substring(0, 300) : '',
-    numPages: parsed.numPages
+    success: true,
+    duplicate: false,
+    message: 'Resume uploaded successfully.'
   };
 };
 
 /**
- * Run (placeholder) Gemini analysis on a stored resume by ID.
+ * Retrieve the latest uploaded resume, send its text to Gemini for analysis,
+ * and return a structured JSON performance report.
  *
- * @param {string} resumeId
- * @returns {Object}
+ * @returns {Object} Structured analysis JSON parsed from Gemini response
  */
-export const analyzeResume = async (resumeId) => {
-  const resume = await Resume.findById(resumeId);
+export const analyzeLatestResume = async () => {
+  // Read the latest uploaded resume
+  const resume = await Resume.findOne().sort({ createdAt: -1 });
+  
   if (!resume) {
-    throw new AppError('Resume not found', 404);
+    throw new AppError('No resume data found. Please upload your resume PDF first.', 404);
   }
 
-  // Placeholder Gemini analysis.
-  // Code snippet using @google/genai syntax:
-  // if (ai) {
-  //   const response = await ai.models.generateContent({
-  //     model: 'gemini-2.0-flash',
-  //     contents: 'Analyze this resume...'
-  //   });
-  // }
+  const prompt = buildResumeAnalysisPrompt(resume.extractedText);
+  const rawResponse = await callGemini(prompt);
 
-  const mockAnalysis = {
-    skillsIdentified: ['React', 'Node.js', 'Express.js', 'JavaScript', 'MongoDB', 'Python'],
-    experienceSummary: 'Has completed multiple academic projects and a Web Development Internship.',
-    educationSummary: 'Pursuing B.Tech in CSE at Tech Institute, graduating in 2027.',
-    recommendations: [
-      'Include links to GitHub repositories for key projects',
-      'Highlight specific algorithms used in backend tasks to stand out'
-    ]
-  };
+  // Strip markdown code fences if present
+  const cleaned = rawResponse
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
 
-  resume.analysis = mockAnalysis;
-  await resume.save();
+  let analysis;
+  try {
+    analysis = JSON.parse(cleaned);
+  } catch (err) {
+    logger.error(`Failed to parse Gemini JSON response: ${cleaned}`);
+    throw new AppError(
+      'Received an unexpected response format from Gemini. Please try again.',
+      502
+    );
+  }
 
-  return {
-    message: 'Gemini analysis placeholder completed successfully',
-    analysis: mockAnalysis
-  };
+  return analysis;
+};
+
+/**
+ * Retrieve the latest resume, build context, and ask Gemini to answer
+ * the student's natural language question using only that context.
+ *
+ * @param {string} question - Student's natural language question
+ * @returns {Object}
+ */
+export const chatWithLatestResume = async (question) => {
+  const resume = await Resume.findOne().sort({ createdAt: -1 });
+  
+  if (!resume) {
+    throw new AppError('No resume data found. Please upload your resume PDF first.', 404);
+  }
+
+  const prompt = buildResumeChatPrompt(resume.extractedText, question);
+  const answer = await callGemini(prompt);
+
+  return { answer: answer.trim() };
 };
