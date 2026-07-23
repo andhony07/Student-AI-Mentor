@@ -106,6 +106,10 @@ export const analyzeLatestResume = async (userId) => {
     throw new AppError('No resume data found. Please upload your resume PDF first.', 404);
   }
 
+  if (resume.analysisCache) {
+    return resume.analysisCache;
+  }
+
   const prompt = buildResumeAnalysisPrompt(resume.extractedText);
   const rawResponse = await callGemini(prompt);
 
@@ -126,6 +130,10 @@ export const analyzeLatestResume = async (userId) => {
       502
     );
   }
+
+  // Cache the result to avoid redundant Gemini calls
+  resume.analysisCache = analysis;
+  await resume.save();
 
   return analysis;
 };

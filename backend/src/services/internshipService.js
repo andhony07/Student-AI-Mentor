@@ -52,7 +52,7 @@ const extractTargetRole = (text) => {
  * Searches external job listings based on the student's latest Resume.
  */
 export const searchExternalJobs = async (userId) => {
-  const resume = await Resume.findOne({ user: userId }).sort({ createdAt: -1 });
+  const resume = await Resume.findOne({ userId }).sort({ createdAt: -1 });
 
   if (!resume) {
     throw new AppError('No resume data found. Please upload your resume PDF first to find internships.', 404);
