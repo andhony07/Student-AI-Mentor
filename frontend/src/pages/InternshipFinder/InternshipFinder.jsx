@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HiBriefcase, HiSearch, HiLocationMarker, HiCurrencyDollar, HiExternalLink, HiPlus } from 'react-icons/hi';
+import { HiBriefcase, HiSearch, HiLocationMarker, HiCurrencyDollar, HiExternalLink, HiPlus, HiChat } from 'react-icons/hi';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { internshipService } from '../../services/internshipService';
+import { mentorService } from '../../services/mentorService';
 import PrimaryButton from '../../components/Buttons/PrimaryButton';
 import Loader from '../../components/Loader/Loader';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import Modal from '../../components/Modal/Modal';
+import ChatInterface from '../../components/Chat/ChatInterface';
 
 const statusColors = {
   interested: 'bg-blue-50 text-blue-700 border-blue-100',
@@ -25,6 +27,10 @@ const InternshipFinder = () => {
   const [loadingTracked, setLoadingTracked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [adding, setAdding] = useState(false);
+  
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   useEffect(() => {
@@ -71,6 +77,21 @@ const InternshipFinder = () => {
     }
   };
 
+  const handleChat = async (question) => {
+    setChatMessages((prev) => [...prev, { role: 'user', content: question }]);
+    setChatLoading(true);
+    try {
+      // Using mentorService for general career advice
+      const res = await mentorService.dailyChat(question);
+      const answer = res.data?.answer || res.data?.data?.answer || 'No response';
+      setChatMessages((prev) => [...prev, { role: 'assistant', content: answer }]);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Chat failed');
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -80,8 +101,8 @@ const InternshipFinder = () => {
             <HiBriefcase className="w-7 h-7 text-teal-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Internship Finder</h1>
-            <p className="text-sm text-slate-500 mt-1">Discover and track internship opportunities based on your resume</p>
+            <h1 className="text-2xl font-bold text-slate-900">Career & Internships</h1>
+            <p className="text-sm text-slate-500 mt-1">Discover opportunities and get AI career advice</p>
           </div>
         </div>
       </div>
@@ -94,6 +115,9 @@ const InternshipFinder = () => {
           </button>
           <button onClick={() => setTab('tracker')} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${tab === 'tracker' ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
             <HiBriefcase className="w-4 h-4" /> My Tracker
+          </button>
+          <button onClick={() => setTab('chat')} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${tab === 'chat' ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
+            <HiChat className="w-4 h-4" /> Career Assistant
           </button>
         </div>
         {tab === 'tracker' && (
@@ -184,6 +208,19 @@ const InternshipFinder = () => {
               <EmptyState icon={HiBriefcase} title="No tracked internships" description="Start tracking your applications to stay organized." />
             </div>
           )}
+        </div>
+      )}
+
+      {/* Chat Tab */}
+      {tab === 'chat' && (
+        <div className="h-[650px]">
+          <ChatInterface
+            messages={chatMessages}
+            onSend={handleChat}
+            loading={chatLoading}
+            placeholder="Ask your Career Assistant about interviews, skills, and applications..."
+            suggestedQuestions={['Which internship should I choose?', 'How should I prepare for interviews?', 'Which skills should I learn?']}
+          />
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HiCalendar, HiPlus, HiClock, HiChat, HiBookOpen, HiTrash } from 'react-icons/hi';
+import { HiCalendar, HiPlus, HiTrash } from 'react-icons/hi';
 import { useForm, useFieldArray } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { examService } from '../../services/examService';
@@ -8,12 +8,8 @@ import ChatInterface from '../../components/Chat/ChatInterface';
 import Loader from '../../components/Loader/Loader';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import Modal from '../../components/Modal/Modal';
-import { getDaysUntil, formatDate } from '../../utils/helpers';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 const ExamPlanner = () => {
-  const [tab, setTab] = useState('plan');
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -92,8 +88,6 @@ const ExamPlanner = () => {
     }
   };
 
-  const daysLeft = plan?.examDate ? getDaysUntil(plan.examDate) : null;
-
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -103,9 +97,9 @@ const ExamPlanner = () => {
             <HiCalendar className="w-7 h-7 text-amber-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Exam Planner</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Plan Assistant</h1>
             <p className="text-sm text-slate-500 mt-1">
-              AI-generated study plans, revision schedules, and countdowns
+              Create an AI study plan and chat with your assistant to refine it
             </p>
           </div>
         </div>
@@ -114,128 +108,37 @@ const ExamPlanner = () => {
         </PrimaryButton>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 p-1.5 bg-white border border-slate-200 rounded-2xl w-fit shadow-sm">
-        <button
-          onClick={() => setTab('plan')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            tab === 'plan'
-              ? 'bg-blue-50 text-blue-700'
-              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          <HiBookOpen className="w-4 h-4" /> Study Plan
-        </button>
-        <button
-          onClick={() => setTab('chat')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            tab === 'chat'
-              ? 'bg-blue-50 text-blue-700'
-              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          <HiChat className="w-4 h-4" /> Plan Assistant
-        </button>
-      </div>
-
-      {tab === 'plan' && (
-        <>
-          {loading ? (
-            <Loader text="Fetching study plan..." />
-          ) : !plan ? (
-            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-              <EmptyState
-                icon={HiCalendar}
-                title="No Exam Plan Yet"
-                description="Create your first study plan to get AI-generated revision schedules."
-                action={
-                  <PrimaryButton onClick={() => setShowModal(true)} icon={HiPlus}>
-                    Create Study Plan
-                  </PrimaryButton>
-                }
-              />
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Header Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center">
-                    <HiBookOpen className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Exam Name</p>
-                    <p className="text-xl font-bold text-slate-900 mt-1">
-                      {plan.examName || plan.title || 'Upcoming Exam'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
-                    <HiClock className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Exam Date</p>
-                    <p className="text-xl font-bold text-slate-900 mt-1">
-                      {plan.examDate ? formatDate(plan.examDate) : 'Not specified'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-5 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-rose-50 rounded-bl-full -mr-4 -mt-4 z-0" />
-                  <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center relative z-10">
-                    <HiCalendar className="w-7 h-7" />
-                  </div>
-                  <div className="relative z-10">
-                    <p className="text-sm font-medium text-slate-500">Countdown</p>
-                    <p className="text-xl font-bold text-slate-900 mt-1">
-                      {daysLeft !== null ? `${daysLeft} Days Left` : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Study Plan Content */}
-              <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-                <h3 className="text-xl font-bold text-slate-900 mb-6">
-                  Generated Study Schedule
-                </h3>
-                <div className="markdown-body text-slate-700 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                  {typeof plan.studyPlan === 'string' ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {plan.studyPlan}
-                    </ReactMarkdown>
-                  ) : typeof plan === 'string' ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {plan}
-                    </ReactMarkdown>
-                  ) : (
-                    <pre className="p-4 overflow-x-auto text-sm text-slate-800">
-                      {JSON.stringify(plan, null, 2)}
-                    </pre>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {tab === 'chat' && (
-        <div className="h-[650px]">
-          <ChatInterface
-            messages={chatMessages}
-            onSend={handleChat}
-            loading={chatLoading}
-            placeholder="Ask questions about your study plan..."
-            suggestedQuestions={[
-              'How should I prioritize my topics?',
-              'Give me a revision strategy for the last 3 days',
-              'How many hours should I study each subject daily?',
-            ]}
+      {loading ? (
+        <Loader text="Fetching study plan..." />
+      ) : !plan ? (
+        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+          <EmptyState
+            icon={HiCalendar}
+            title="No Exam Plan Yet"
+            description="Create your first study plan to start chatting with the Plan Assistant."
+            action={
+              <PrimaryButton onClick={() => setShowModal(true)} icon={HiPlus}>
+                Create Study Plan
+              </PrimaryButton>
+            }
           />
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Chat Interface */}
+          <div className="h-[600px]">
+            <ChatInterface
+              messages={chatMessages}
+              onSend={handleChat}
+              loading={chatLoading}
+              placeholder="Ask questions about your study plan..."
+              suggestedQuestions={[
+                'How should I prioritize my topics?',
+                'Give me a revision strategy for the last 3 days',
+                'Modify this plan to focus more on my weak areas',
+              ]}
+            />
+          </div>
         </div>
       )}
 
