@@ -22,6 +22,10 @@ const resumeSchema = new mongoose.Schema({
   extractedText: {
     type: String,
     required: true
+  },
+  analysisCache: {
+    type: Object,
+    default: null
   }
 }, {
   timestamps: true // Automatically manages createdAt (Upload Timestamp) and updatedAt

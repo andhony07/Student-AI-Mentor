@@ -76,6 +76,11 @@ export const uploadAndStoreLMS = async (userId, fileBuffer) => {
   // Replace all existing records for this user with the newly uploaded data
   await LMSProgress.deleteMany({ userId });
 
+  // Clear analysis cache since data is new
+  await import('../models/User.js').then(({ default: User }) => 
+    User.findByIdAndUpdate(userId, { lmsAnalysisCache: null })
+  );
+
   const documents = rows.map((row) => ({
     userId,
     course: row.course,
@@ -101,6 +106,13 @@ export const uploadAndStoreLMS = async (userId, fileBuffer) => {
  * @returns {Object} Structured analysis JSON parsed from Gemini response
  */
 export const analyzePerformance = async (userId) => {
+  const User = (await import('../models/User.js')).default;
+  const user = await User.findById(userId);
+
+  if (user && user.lmsAnalysisCache) {
+    return user.lmsAnalysisCache;
+  }
+
   const records = await LMSProgress.find({ userId }).lean();
 
   if (!records.length) {
@@ -130,6 +142,12 @@ export const analyzePerformance = async (userId) => {
       'Received an unexpected response format from Gemini. Please try again.',
       502
     );
+  }
+
+  // Cache the result
+  if (user) {
+    user.lmsAnalysisCache = analysis;
+    await user.save();
   }
 
   return analysis;

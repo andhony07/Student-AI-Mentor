@@ -57,6 +57,10 @@ const userSchema = new mongoose.Schema(
     },
     githubUsername: {
       type: String
+    },
+    lmsAnalysisCache: {
+      type: Object,
+      default: null
     }
   },
   { timestamps: true }
